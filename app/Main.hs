@@ -12,7 +12,7 @@ module Main where
 
 import Apecs
 
-import Control.Monad (when)
+import Control.Monad (when, forM_)
 
 import Data.Aeson
 import Data.List (foldl', find)
@@ -98,13 +98,16 @@ main = do
 
 runSimulation :: Simulation -> IO ()
 runSimulation sim = do 
-    win   <- initWindow (windowWidth sim) (windowHeight sim) (windowTitle sim)
+    let width  = windowWidth sim 
+        height = windowHeight sim
+
+    win   <- initWindow width height (windowTitle sim)
     world <- initWorld
 
     setTargetFPS (framerate sim)
     runSystem (mapM_ spawnCircle (entities sim)) world -- spawn initial entities 
 
-    whileWindowOpen0 (runSystem gameFrame world) 
+    whileWindowOpen0 (runSystem (gameFrame width height) world) 
     closeWindow win
 
 showError :: String -> IO ()
@@ -115,8 +118,8 @@ showError err = do
         drawText err 10 10 20 red
     closeWindow win
 
-gameFrame :: System World ()
-gameFrame = updateEntities >> liftIO beginDrawing >> renderWorld >> liftIO endDrawing
+gameFrame :: Int -> Int -> System World ()
+gameFrame width height = updateEntities >> liftIO beginDrawing >> renderWorld width height >> liftIO endDrawing
 
 updateEntities :: System World ()
 updateEntities = do 
@@ -155,8 +158,19 @@ updateEntities = do
 circleCollision :: (Vector2, Float) -> (Vector2, Float) -> Bool
 circleCollision (p1, r1) (p2, r2) = vectorDistance p1 p2 < r1 + r2
 
-renderWorld :: System World ()
-renderWorld = liftIO (clearBackground black) >> renderEntities
+renderWorld :: Int -> Int -> System World ()
+renderWorld width height = do 
+    liftIO $ do 
+        clearBackground black
+
+        -- Draw grid
+        forM_ [0, 10 .. width] $ \x -> 
+            drawLine x 0 x height (Color 10 10 10 255)
+
+        forM_ [0, 10 .. height] $ \y -> 
+            drawLine 0 y width y (Color 10 10 10 255)
+
+    renderEntities
 
 renderEntities :: System World ()
 renderEntities = cmapM_ $ \(Position (Vector2 x y), Size size, Mass m, CircleColor color, Title title) -> liftIO $ do
