@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -91,15 +92,27 @@ gravityConstant = 1
 main :: IO ()
 main = do 
     [filename] <- getArgs
-    Just sim   <- decodeFileStrict @Simulation filename
+    eitherDecodeFileStrict @Simulation filename >>= \case 
+        Left  err -> showError err
+        Right sim -> runSimulation sim
 
+runSimulation :: Simulation -> IO ()
+runSimulation sim = do 
     win   <- initWindow (windowWidth sim) (windowHeight sim) (windowTitle sim)
     world <- initWorld
 
     setTargetFPS (framerate sim)
-    runSystem (mapM_ spawnCircle (entities sim)) world -- spawn initial entities
+    runSystem (mapM_ spawnCircle (entities sim)) world -- spawn initial entities 
 
-    whileWindowOpen0 (runSystem gameFrame world)
+    whileWindowOpen0 (runSystem gameFrame world) 
+    closeWindow win
+
+showError :: String -> IO ()
+showError err = do 
+    win <- initWindow 800 600 "Error"
+    whileWindowOpen0 $ drawing $ do 
+        clearBackground black
+        drawText err 10 10 20 red
     closeWindow win
 
 gameFrame :: System World ()
