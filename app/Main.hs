@@ -39,6 +39,7 @@ newtype Size        = Size Float
 newtype Mass        = Mass Float
 newtype EntityID    = EntityID Entity
 newtype CircleColor = CircleColor Color
+newtype Title       = Title String
 
 data Immovable = Immovable
 
@@ -54,9 +55,10 @@ instance FromJSON CircleColor where
     parseJSON = withObject "color" $ \v -> CircleColor 
         <$> (Color <$> v .: "r" <*> v .: "g" <*> v .: "b" <*> v .: "a")
 
-makeWorldAndComponents "World" [''Position, ''Velocity, ''Size, ''Mass, ''EntityID, ''Immovable, ''CircleColor]
+makeWorldAndComponents "World" [''Position, ''Velocity, ''Size, ''Mass, ''EntityID, ''Immovable, ''CircleColor, ''Title]
 
-data EntityData = EntityData { entityPos   :: Position
+data EntityData = EntityData { entityTitle :: Title 
+                             , entityPos   :: Position
                              , entityVel   :: Velocity
                              , entityMass  :: Mass
                              , entitySize  :: Size
@@ -66,7 +68,8 @@ data EntityData = EntityData { entityPos   :: Position
 
 instance FromJSON EntityData where 
     parseJSON = withObject "entity" $ \v -> EntityData 
-        <$> v .: "position"
+        <$> (Title <$> v .: "title")
+        <*> v .: "position"
         <*> v .: "velocity"
         <*> (Mass <$> v .: "mass")
         <*> (Size <$> v .: "size")
@@ -143,13 +146,14 @@ renderWorld :: System World ()
 renderWorld = liftIO (clearBackground black) >> renderEntities
 
 renderEntities :: System World ()
-renderEntities = cmapM_ $ \(Position (Vector2 x y), Size size, Mass m, CircleColor color) -> liftIO $ do
+renderEntities = cmapM_ $ \(Position (Vector2 x y), Size size, Mass m, CircleColor color, Title title) -> liftIO $ do
         drawCircle (round x) (round y) size color
-        drawText (show m) (round x) (round y + 20) 10 white
+        drawText title (round x) (round $ y - size - 15) 10 white
+        drawText (show m) (round x) (round $ y + size + 5) 10 white
 
 spawnCircle :: EntityData -> System World ()
 spawnCircle entity = do 
-    e <- newEntity (entityPos entity, entityVel entity, entitySize entity, entityMass entity, entityColor entity)
+    e <- newEntity (entityPos entity, entityVel entity, entitySize entity, entityMass entity, entityColor entity, entityTitle entity)
     when (immovable entity) (set e Immovable)
     set e (EntityID e)
 

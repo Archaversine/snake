@@ -1,6 +1,7 @@
 {
     "entities": [
         {
+            "title": "Sun",
             "position": {
                 "x": 500, 
                 "y": 400
@@ -20,6 +21,7 @@
             }
         },
         {
+            "title": "Earth", 
             "position": {
                 "x": 500, 
                 "y": 600
@@ -39,9 +41,10 @@
             }
         },
         {
+            "title": "Asteroid", 
             "position": {
                 "x": 400,
-                "y": 100
+                "y": 200
             }, 
             "velocity": {
                 "x": -1.25, 
@@ -58,6 +61,7 @@
             }
         },
         {
+            "title": "Asteroid", 
             "position": {
                 "x": 400,
                 "y": 50
