@@ -56,6 +56,25 @@
                 "b": 50,
                 "a": 255
             }
+        },
+        {
+            "position": {
+                "x": 400,
+                "y": 50
+            }, 
+            "velocity": {
+                "x": -1, 
+                "y": 0
+            },
+            "mass": 50,
+            "size": 10,
+            "immovable": false, 
+            "color": {
+                "r": 50, 
+                "g": 50, 
+                "b": 50,
+                "a": 255
+            }
         } 
     ], 
     "windowWidth": 800,
