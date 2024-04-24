@@ -2,8 +2,8 @@
     "entities": [
         {
             "position": {
-                "x": 400, 
-                "y": 300
+                "x": 500, 
+                "y": 400
             }, 
             "velocity": {
                 "x": 0, 
@@ -11,7 +11,7 @@
             }, 
             "mass": 25000,
             "size": 20,
-            "immovable": false, 
+            "immovable": true, 
             "color": {
                 "r": 255, 
                 "g": 255, 
@@ -21,11 +21,11 @@
         },
         {
             "position": {
-                "x": 400, 
-                "y": 400
+                "x": 500, 
+                "y": 600
             },
             "velocity": {
-                "x": 2, 
+                "x": 1.5, 
                 "y": 0
             },
             "mass": 200,
@@ -77,8 +77,8 @@
             }
         } 
     ], 
-    "windowWidth": 800,
-    "windowHeight": 600,
+    "windowWidth": 1000,
+    "windowHeight": 800,
     "windowTitle": "Sample Simulation",
     "framerate": 60
 }
