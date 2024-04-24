@@ -61,7 +61,7 @@ gameFrame :: App ()
 gameFrame = updateWorld >> liftIO beginDrawing >> renderWorld >> liftIO endDrawing
 
 updateWorld :: App () 
-updateWorld = updateCamera >> updateEntities
+updateWorld = updateCamera >> updateCircles
 
 renderWorld :: App ()
 renderWorld = do 
@@ -85,6 +85,6 @@ renderWorld = do
         forM_ [gridY, gridY + gridSize .. height] $ \y -> 
             drawLine 0 y width y (Color 10 10 10 255)
 
-    renderEntities
+    renderCircles
 
 

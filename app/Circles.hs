@@ -33,8 +33,8 @@ spawnCircle entity = do
     when (immovable entity) (set e Immovable)
     set e (EntityID e)
 
-updateEntities :: App ()
-updateEntities = do 
+updateCircles :: App ()
+updateCircles = do 
     lift $ cmapM_ $ \(Position p1, Velocity v, Mass m1, EntityID entity1, _ :: Not Immovable) -> do 
         vecs <- collect $ \(Position p2, Mass m2, EntityID entity2) -> do 
             if entity1 /= entity2 then do 
@@ -69,8 +69,8 @@ updateEntities = do
     maxLength <- asks (maxTrailLength . simul)
     lift $ cmap $ \(Position p, Trail trail, _ :: Not Immovable) -> Trail (p : take (maxLength - 1) trail)
 
-renderEntities :: App ()
-renderEntities = do 
+renderCircles :: App ()
+renderCircles = do 
     xOff <- asks xOffset
     yOff <- asks yOffset
 
