@@ -86,7 +86,7 @@ instance FromJSON Simulation
 data AppState = AppState { simul       :: Simulation 
                          , xOffset     :: IORef Float
                          , yOffset     :: IORef Float
-                         , offsetSpeed :: IORef Float
+                         , offsetSpeed :: Float
                          }
 
 type App = ReaderT AppState (SystemT World IO)

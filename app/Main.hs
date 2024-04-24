@@ -44,7 +44,14 @@ runSimulation sim = do
     setTargetFPS (framerate sim)
     runSystem (mapM_ spawnCircle (entities sim)) world -- spawn initial entities 
 
-    s <- AppState sim <$> newIORef 0 <*> newIORef 0 <*> newIORef 3
+    x <- newIORef 0 
+    y <- newIORef 0
+
+    let s = AppState { simul = sim
+                     , xOffset = x
+                     , yOffset = y
+                     , offsetSpeed = 10
+                     }
 
     whileWindowOpen0 (runApp gameFrame world s) 
     closeWindow win
@@ -71,19 +78,20 @@ renderWorld = do
     camX <- asks xOffset >>= liftIO . readIORef
     camY <- asks yOffset >>= liftIO . readIORef
 
-    let gridSize = 10 
-        gridX    = round camX `mod` gridSize
-        gridY    = round camY `mod` gridSize
+    let gridSize  = 10 
+        gridColor = Color 20 20 20 255
+        gridX     = round camX `mod` gridSize
+        gridY     = round camY `mod` gridSize
 
     liftIO $ do 
         clearBackground black
 
         -- Draw grid
         forM_ [gridX, gridX + gridSize .. width] $ \x -> 
-            drawLine x 0 x height (Color 10 10 10 255)
+            drawLine x 0 x height gridColor
 
         forM_ [gridY, gridY + gridSize .. height] $ \y -> 
-            drawLine 0 y width y (Color 10 10 10 255)
+            drawLine 0 y width y gridColor
 
     renderCircles
 

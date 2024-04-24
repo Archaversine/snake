@@ -15,11 +15,9 @@ updateCamera = updateKeyboardPan >> checkResetKey >> updateMousePan
 
 updateKeyboardPan :: App () 
 updateKeyboardPan = do 
-    xOff <- asks xOffset
-    yOff <- asks yOffset
-    s    <- asks offsetSpeed
-
-    speed <- liftIO (readIORef s)
+    xOff  <- asks xOffset
+    yOff  <- asks yOffset
+    speed <- asks offsetSpeed
 
     left  <- liftIO $ (||) <$> isKeyDown KeyA <*> isKeyDown KeyLeft
     right <- liftIO $ (||) <$> isKeyDown KeyD <*> isKeyDown KeyRight 
