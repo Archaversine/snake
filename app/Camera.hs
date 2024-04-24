@@ -11,7 +11,10 @@ import Raylib.Core
 import Raylib.Types
 
 updateCamera :: App () 
-updateCamera = do 
+updateCamera = updateKeyboardPan >> checkResetKey >> updateMousePan
+
+updateKeyboardPan :: App () 
+updateKeyboardPan = do 
     xOff <- asks xOffset
     yOff <- asks yOffset
     s    <- asks offsetSpeed
@@ -28,12 +31,22 @@ updateCamera = do
 
     liftIO $ modifyIORef xOff (subtract (dx * speed))
     liftIO $ modifyIORef yOff (subtract (dy * speed))
+    
+checkResetKey :: App () 
+checkResetKey = do 
+    xOff <- asks xOffset
+    yOff <- asks yOffset
 
     reset <- liftIO (isKeyPressed KeyR)
 
     when reset $ liftIO $ do 
         writeIORef xOff 0
         writeIORef yOff 0
+
+updateMousePan :: App ()
+updateMousePan = do 
+    xOff <- asks xOffset
+    yOff <- asks yOffset
 
     rightMouse <- liftIO (isMouseButtonDown MouseButtonRight)
 
