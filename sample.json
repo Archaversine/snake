@@ -1,0 +1,85 @@
+{
+    "entities": [
+        {
+            "position": {
+                "x": 400, 
+                "y": 300
+            }, 
+            "velocity": {
+                "x": 0, 
+                "y": 0
+            }, 
+            "mass": 25000,
+            "size": 20,
+            "immovable": false, 
+            "color": {
+                "r": 255, 
+                "g": 255, 
+                "b": 0,
+                "a": 255
+            }
+        },
+        {
+            "position": {
+                "x": 400, 
+                "y": 400
+            },
+            "velocity": {
+                "x": 2, 
+                "y": 0
+            },
+            "mass": 200,
+            "size": 10,
+            "immovable": false,
+            "color": {
+                "r": 0, 
+                "g": 0, 
+                "b": 255,
+                "a": 255
+            }
+        },
+        {
+            "position": {
+                "x": 266,
+                "y": 300
+            }, 
+            "velocity": {
+                "x": 1, 
+                "y": 1
+            },
+            "mass": 50,
+            "size": 10,
+            "immovable": false, 
+            "color": {
+                "r": 50, 
+                "g": 50, 
+                "b": 50,
+                "a": 255
+            }
+        }, 
+        {
+            "position": {
+                "x": 533,
+                "y": 300
+            }, 
+            "velocity": {
+                "x": -1, 
+                "y": -1 
+            },
+            "mass": 50,
+            "size": 10,
+            "immovable": false, 
+            "color": {
+                "r": 50, 
+                "g": 50, 
+                "b": 50,
+                "a": 255
+            
+            }
+        }
+    ], 
+    "windowWidth": 800,
+    "windowHeight": 600,
+    "windowTitle": "Sample Simulation",
+    "framerate": 60
+}
