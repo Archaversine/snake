@@ -10,7 +10,7 @@
                 "x": 0, 
                 "y": 0
             }, 
-            "mass": 25000,
+            "mass": 2500,
             "size": 20,
             "immovable": true, 
             "color": {
@@ -27,7 +27,7 @@
                 "y": 600
             },
             "velocity": {
-                "x": 90, 
+                "x": 3.1, 
                 "y": 0
             },
             "mass": 200,
@@ -44,14 +44,14 @@
             "title": "Asteroid A", 
             "position": {
                 "x": 400,
-                "y": 200
+                "y": 100
             }, 
             "velocity": {
-                "x": -70, 
+                "x": 2.75, 
                 "y": 0
             },
-            "mass": 50,
-            "size": 10,
+            "mass": 10,
+            "size": 5,
             "immovable": false, 
             "color": {
                 "r": 50, 
@@ -64,14 +64,14 @@
             "title": "Asteroid B", 
             "position": {
                 "x": 400,
-                "y": 50
+                "y": 700 
             }, 
             "velocity": {
-                "x": -60, 
+                "x": -2.8, 
                 "y": 0
             },
-            "mass": 50,
-            "size": 10,
+            "mass": 1,
+            "size": 5,
             "immovable": false, 
             "color": {
                 "r": 50, 
@@ -79,7 +79,7 @@
                 "b": 50,
                 "a": 255
             }
-        } 
+        }
     ], 
     "windowWidth": 1000,
     "windowHeight": 800,

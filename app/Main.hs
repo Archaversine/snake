@@ -133,8 +133,6 @@ gameFrame = updateEntities >> liftIO beginDrawing >> renderWorld >> liftIO endDr
 
 updateEntities :: App ()
 updateEntities = do 
-    delta <- liftIO getFrameTime
-
     lift $ cmapM_ $ \(Position p1, Velocity v, Mass m1, EntityID entity1, _ :: Not Immovable) -> do 
         vecs <- collect $ \(Position p2, Mass m2, EntityID entity2) -> do 
             if entity1 /= entity2 then do 
@@ -152,7 +150,7 @@ updateEntities = do
     -- Apply velocity to positions  
     -- Negate velocity if touching another entity (collision detection)
     lift $ cmapM_ $ \(Position currentPos, Velocity v, Size s1, EntityID entity1, _ :: Not Immovable) -> do 
-        let nextPos = currentPos |+| (v |* delta)
+        let nextPos = currentPos |+| v
 
         rest <- collect $ \(Position p2, Size s2, EntityID entity2) -> do 
             if entity1 == entity2 then Nothing else Just (p2, s2)
@@ -163,7 +161,7 @@ updateEntities = do
                 let mag = magnitude v
                     vec = vectorNormalize (p2 |-| currentPos) |* mag
                     rot = v |+| vector2Rotate vec pi -- rotate 180
-                set entity1 (Velocity rot, Position (currentPos |+| (rot |* delta)))
+                set entity1 (Velocity rot, Position (currentPos |+| rot))
 
     -- Update trails
     maxLength <- asks maxTrailLength
