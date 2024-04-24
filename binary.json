@@ -1,0 +1,68 @@
+{
+    "entities": [
+        {
+            "title": "Star A",
+            "position": {
+                "x": 400,
+                "y": 400
+            },
+            "velocity": {
+                "x": 0,
+                "y": 2
+            },
+            "mass": 100000,
+            "size": 20,
+            "immovable": false,
+            "color": {
+                "r": 255,
+                "g": 255,
+                "b": 0,
+                "a": 255
+            }
+        },
+        {
+            "title": "Star B",
+            "position": {
+                "x": 600,
+                "y": 400
+            },
+            "velocity": {
+                "x": 0,
+                "y": -2 
+            },
+            "mass": 100000,
+            "size": 20,
+            "immovable": false,
+            "color": {
+                "r": 255,
+                "g": 255,
+                "b": 0,
+                "a": 255
+            }
+        },
+        {
+            "title": "Planet",
+            "position": {
+                "x": 500,
+                "y": 75
+            },
+            "velocity": {
+                "x": 3,
+                "y": 0
+            },
+            "mass": 20,
+            "size": 7,
+            "immovable": false,
+            "color": {
+                "r": 50,
+                "g": 50,
+                "b": 50,
+                "a": 255
+            }
+        } 
+    ],
+    "windowWidth": 1000,
+    "windowHeight": 800,
+    "windowTitle": "Binary Stars",
+    "framerate": 60
+}
