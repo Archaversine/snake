@@ -64,5 +64,6 @@
     "windowWidth": 1000,
     "windowHeight": 800,
     "windowTitle": "Binary Stars",
-    "framerate": 60
+    "framerate": 60,
+    "maxTrailLength": 100
 }

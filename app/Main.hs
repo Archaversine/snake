@@ -12,7 +12,7 @@ module Main where
 
 import Apecs
 
-import Control.Monad (when, forM_)
+import Control.Monad.Reader
 
 import Data.Aeson
 import Data.List (foldl', find)
@@ -31,9 +31,6 @@ import Raylib.Types
 
 import System.Environment
 
-windowDims :: Num a => (a, a)
-windowDims = (800, 600)
-
 newtype Position    = Position Vector2
 newtype Velocity    = Velocity Vector2
 newtype Size        = Size Float
@@ -41,6 +38,7 @@ newtype Mass        = Mass Float
 newtype EntityID    = EntityID Entity
 newtype CircleColor = CircleColor Color
 newtype Title       = Title String
+newtype Trail       = Trail [Vector2]
 
 data Immovable = Immovable
 
@@ -56,7 +54,16 @@ instance FromJSON CircleColor where
     parseJSON = withObject "color" $ \v -> CircleColor 
         <$> (Color <$> v .: "r" <*> v .: "g" <*> v .: "b" <*> v .: "a")
 
-makeWorldAndComponents "World" [''Position, ''Velocity, ''Size, ''Mass, ''EntityID, ''Immovable, ''CircleColor, ''Title]
+makeWorldAndComponents "World" [ ''Position
+                               , ''Velocity
+                               , ''Size
+                               , ''Mass
+                               , ''EntityID
+                               , ''Immovable
+                               , ''CircleColor
+                               , ''Title
+                               , ''Trail
+                               ]
 
 data EntityData = EntityData { entityTitle :: Title 
                              , entityPos   :: Position
@@ -77,17 +84,20 @@ instance FromJSON EntityData where
         <*> v .:? "immovable" .!= False
         <*> v .: "color"
 
-data Simulation = Simulation { entities     :: [EntityData] 
-                             , windowWidth  :: Int 
-                             , windowHeight :: Int 
-                             , windowTitle  :: String
-                             , framerate    :: Int
+data Simulation = Simulation { entities       :: [EntityData] 
+                             , windowWidth    :: Int 
+                             , windowHeight   :: Int 
+                             , windowTitle    :: String
+                             , framerate      :: Int
+                             , maxTrailLength :: Int
                              } deriving Generic
 
 instance FromJSON Simulation
 
-gravityConstant :: Float
-gravityConstant = 1
+type App = ReaderT Simulation (SystemT World IO)
+
+runApp :: App a -> World -> Simulation -> IO a
+runApp app world initial = runSystem (runReaderT app initial) world
 
 main :: IO ()
 main = do 
@@ -107,7 +117,7 @@ runSimulation sim = do
     setTargetFPS (framerate sim)
     runSystem (mapM_ spawnCircle (entities sim)) world -- spawn initial entities 
 
-    whileWindowOpen0 (runSystem (gameFrame width height) world) 
+    whileWindowOpen0 (runApp gameFrame world sim) 
     closeWindow win
 
 showError :: String -> IO ()
@@ -118,14 +128,14 @@ showError err = do
         drawText err 10 10 20 red
     closeWindow win
 
-gameFrame :: Int -> Int -> System World ()
-gameFrame width height = updateEntities >> liftIO beginDrawing >> renderWorld width height >> liftIO endDrawing
+gameFrame :: App ()
+gameFrame = updateEntities >> liftIO beginDrawing >> renderWorld >> liftIO endDrawing
 
-updateEntities :: System World ()
+updateEntities :: App ()
 updateEntities = do 
     delta <- liftIO getFrameTime
 
-    cmapM_ $ \(Position p1, Velocity v, Mass m1, EntityID entity1, _ :: Not Immovable) -> do 
+    lift $ cmapM_ $ \(Position p1, Velocity v, Mass m1, EntityID entity1, _ :: Not Immovable) -> do 
         vecs <- collect $ \(Position p2, Mass m2, EntityID entity2) -> do 
             if entity1 /= entity2 then do 
                 let dist  = vectorDistance p1 p2
@@ -141,7 +151,7 @@ updateEntities = do
 
     -- Apply velocity to positions  
     -- Negate velocity if touching another entity (collision detection)
-    cmapM_ $ \(Position currentPos, Velocity v, Size s1, EntityID entity1, _ :: Not Immovable) -> do 
+    lift $ cmapM_ $ \(Position currentPos, Velocity v, Size s1, EntityID entity1, _ :: Not Immovable) -> do 
         let nextPos = currentPos |+| (v |* delta)
 
         rest <- collect $ \(Position p2, Size s2, EntityID entity2) -> do 
@@ -155,11 +165,18 @@ updateEntities = do
                     rot = v |+| vector2Rotate vec pi -- rotate 180
                 set entity1 (Velocity rot, Position (currentPos |+| (rot |* delta)))
 
+    -- Update trails
+    maxLength <- asks maxTrailLength
+    lift $ cmap $ \(Position p, Trail trail, _ :: Not Immovable) -> Trail (p : take (maxLength - 1) trail)
+
 circleCollision :: (Vector2, Float) -> (Vector2, Float) -> Bool
 circleCollision (p1, r1) (p2, r2) = vectorDistance p1 p2 < r1 + r2
 
-renderWorld :: Int -> Int -> System World ()
-renderWorld width height = do 
+renderWorld :: App ()
+renderWorld = do 
+    width  <- asks windowWidth
+    height <- asks windowHeight
+
     liftIO $ do 
         clearBackground black
 
@@ -172,15 +189,29 @@ renderWorld width height = do
 
     renderEntities
 
-renderEntities :: System World ()
-renderEntities = cmapM_ $ \(Position (Vector2 x y), Size size, Mass m, CircleColor color, Title title) -> liftIO $ do
-        drawCircle (round x) (round y) size color
-        drawText title (round x) (round $ y - size - 15) 10 white
-        drawText (show m) (round x) (round $ y + size + 5) 10 white
+renderEntities :: App ()
+renderEntities = lift $ cmapM_ $ \(Position (Vector2 x y), Size size, Mass m, CircleColor color, Title title, Trail trail) -> liftIO $ do
+    renderTrail trail color
+    drawCircle (round x) (round y) size color
+    drawText title (round x) (round $ y - size - 15) 10 white
+    drawText (show m) (round x) (round $ y + size + 5) 10 white
+
+renderTrail :: MonadIO m => [Vector2] -> Color -> m ()
+renderTrail (Vector2 x1 y1 : ts@(Vector2 x2 y2 : _)) color = do 
+    liftIO $ drawLine (round x1) (round y1) (round x2) (round y2) color
+    renderTrail ts color
+renderTrail _ _ = return ()
 
 spawnCircle :: EntityData -> System World ()
 spawnCircle entity = do 
-    e <- newEntity (entityPos entity, entityVel entity, entitySize entity, entityMass entity, entityColor entity, entityTitle entity)
+    e <- newEntity ( entityPos entity
+                   , entityVel entity
+                   , entitySize entity
+                   , entityMass entity
+                   , entityColor entity
+                   , entityTitle entity
+                   , Trail []
+                   )
     when (immovable entity) (set e Immovable)
     set e (EntityID e)
 
