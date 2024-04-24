@@ -44,13 +44,11 @@ runSimulation sim = do
     setTargetFPS (framerate sim)
     runSystem (mapM_ spawnCircle (entities sim)) world -- spawn initial entities 
 
-    x <- newIORef 0 
-    y <- newIORef 0
+    cam <- newIORef (Camera2D (Vector2 0 0) (Vector2 0 0) 0 1)
 
-    let s = AppState { simul = sim
-                     , xOffset = x
-                     , yOffset = y
+    let s = AppState { simul       = sim
                      , offsetSpeed = 10
+                     , camera      = cam
                      }
 
     whileWindowOpen0 (runApp gameFrame world s) 
@@ -74,9 +72,9 @@ renderWorld :: App ()
 renderWorld = do 
     width  <- asks (windowWidth . simul)
     height <- asks (windowHeight . simul)
+    cam    <- asks camera >>= liftIO . readIORef
 
-    camX <- asks xOffset >>= liftIO . readIORef
-    camY <- asks yOffset >>= liftIO . readIORef
+    let Vector2 camX camY = camera2D'offset cam
 
     let gridSize  = 10 
         gridColor = Color 20 20 20 255
@@ -93,6 +91,8 @@ renderWorld = do
         forM_ [gridY, gridY + gridSize .. height] $ \y -> 
             drawLine 0 y width y gridColor
 
+    liftIO (beginMode2D cam)
     renderCircles
+    liftIO endMode2D
 
 

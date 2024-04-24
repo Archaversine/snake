@@ -9,14 +9,14 @@ import Data.IORef
 
 import Raylib.Core
 import Raylib.Types
+import Raylib.Util.Math
 
 updateCamera :: App () 
 updateCamera = updateKeyboardPan >> checkResetKey >> updateMousePan
 
 updateKeyboardPan :: App () 
 updateKeyboardPan = do 
-    xOff  <- asks xOffset
-    yOff  <- asks yOffset
+    cam   <- asks camera
     speed <- asks offsetSpeed
 
     left  <- liftIO $ (||) <$> isKeyDown KeyA <*> isKeyDown KeyLeft
@@ -26,29 +26,23 @@ updateKeyboardPan = do
 
     let dx = bool 0 1 right - bool 0 1 left
         dy = bool 0 1 down  - bool 0 1 up
+        v  = Vector2 (dx * speed) (dy * speed)
 
-    liftIO $ modifyIORef xOff (subtract (dx * speed))
-    liftIO $ modifyIORef yOff (subtract (dy * speed))
+    liftIO $ modifyIORef cam (\c -> c { camera2D'offset = camera2D'offset c |-| v })
     
 checkResetKey :: App () 
 checkResetKey = do 
-    xOff <- asks xOffset
-    yOff <- asks yOffset
-
+    cam   <- asks camera
     reset <- liftIO (isKeyPressed KeyR)
 
     when reset $ liftIO $ do 
-        writeIORef xOff 0
-        writeIORef yOff 0
+        modifyIORef cam (\c -> c { camera2D'offset = Vector2 0 0 })
 
 updateMousePan :: App ()
 updateMousePan = do 
-    xOff <- asks xOffset
-    yOff <- asks yOffset
-
+    cam        <- asks camera
     rightMouse <- liftIO (isMouseButtonDown MouseButtonRight)
 
     when rightMouse $ liftIO $ do 
-        Vector2 mouseDX mouseDY <- getMouseDelta
-        modifyIORef xOff (+mouseDX)
-        modifyIORef yOff (+mouseDY)
+        mouseV <- getMouseDelta
+        modifyIORef cam (\c -> c { camera2D'offset = camera2D'offset c |+| mouseV })

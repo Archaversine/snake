@@ -71,25 +71,14 @@ updateCircles = do
 
 renderCircles :: App ()
 renderCircles = do 
-    xOff <- asks xOffset
-    yOff <- asks yOffset
-
-    camX <- liftIO (readIORef xOff)
-    camY <- liftIO (readIORef yOff)
-
-    let cam = Vector2 camX camY
-
     -- Render Entity trails underneath everything else
     lift $ cmapM_ $ \(CircleColor color, Trail trail) -> liftIO $ do 
-        renderTrail (map (|+| cam) trail) color
+        renderTrail trail color
 
     lift $ cmapM_ $ \(Position (Vector2 x y), Size size, Mass m, CircleColor color, Title title) -> liftIO $ do
-        let x' = x + camX
-            y' = y + camY
-
-        drawCircle (round x') (round y') size color
-        drawText title (round x') (round $ y' - size - 15) 10 white
-        drawText (show m) (round x') (round $ y' + size + 5) 10 white
+        drawCircle (round x) (round y) size color
+        drawText title (round x) (round $ y - size - 15) 10 white
+        drawText (show m) (round x) (round $ y + size + 5) 10 white
 
 circleCollision :: (Vector2, Float) -> (Vector2, Float) -> Bool
 circleCollision (p1, r1) (p2, r2) = vectorDistance p1 p2 < r1 + r2

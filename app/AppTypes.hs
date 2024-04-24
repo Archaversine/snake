@@ -84,9 +84,8 @@ data Simulation = Simulation { entities       :: [EntityData]
 instance FromJSON Simulation
 
 data AppState = AppState { simul       :: Simulation 
-                         , xOffset     :: IORef Float
-                         , yOffset     :: IORef Float
                          , offsetSpeed :: Float
+                         , camera      :: IORef Camera2D
                          }
 
 type App = ReaderT AppState (SystemT World IO)
