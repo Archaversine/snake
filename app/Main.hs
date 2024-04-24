@@ -116,7 +116,7 @@ updateEntities = do
                     force = (m1 * m2) / (dist * dist)
                     acc   = force / m1
                     vec   = p2 |-| p1
-                    grav  = vectorNormalize vec |* acc |* delta
+                    grav  = vectorNormalize vec |* acc
                 Just grav
             else Nothing
 
@@ -126,7 +126,7 @@ updateEntities = do
     -- Apply velocity to positions  
     -- Negate velocity if touching another entity (collision detection)
     cmapM_ $ \(Position currentPos, Velocity v, Size s1, EntityID entity1, _ :: Not Immovable) -> do 
-        let nextPos = currentPos |+| v
+        let nextPos = currentPos |+| (v |* delta)
 
         rest <- collect $ \(Position p2, Size s2, EntityID entity2) -> do 
             if entity1 == entity2 then Nothing else Just (p2, s2)
@@ -134,10 +134,10 @@ updateEntities = do
         case find (circleCollision (nextPos, s1)) rest of
             Nothing -> set entity1 (Position nextPos)
             Just (p2, _) -> do 
-                let mag = magnitude v 
+                let mag = magnitude v
                     vec = vectorNormalize (p2 |-| currentPos) |* mag
                     rot = v |+| vector2Rotate vec pi -- rotate 180
-                set entity1 (Velocity rot, Position (currentPos |+| rot))
+                set entity1 (Velocity rot, Position (currentPos |+| (rot |* delta)))
 
 circleCollision :: (Vector2, Float) -> (Vector2, Float) -> Bool
 circleCollision (p1, r1) (p2, r2) = vectorDistance p1 p2 < r1 + r2

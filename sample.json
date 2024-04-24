@@ -27,7 +27,7 @@
                 "y": 600
             },
             "velocity": {
-                "x": 1.5, 
+                "x": 90, 
                 "y": 0
             },
             "mass": 200,
@@ -41,13 +41,13 @@
             }
         },
         {
-            "title": "Asteroid", 
+            "title": "Asteroid A", 
             "position": {
                 "x": 400,
                 "y": 200
             }, 
             "velocity": {
-                "x": -1.25, 
+                "x": -70, 
                 "y": 0
             },
             "mass": 50,
@@ -61,13 +61,13 @@
             }
         },
         {
-            "title": "Asteroid", 
+            "title": "Asteroid B", 
             "position": {
                 "x": 400,
                 "y": 50
             }, 
             "velocity": {
-                "x": -1, 
+                "x": -60, 
                 "y": 0
             },
             "mass": 50,
