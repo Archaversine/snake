@@ -169,6 +169,13 @@ updateCamera = do
         writeIORef xOff 0
         writeIORef yOff 0
 
+    rightMouse <- liftIO (isMouseButtonDown MouseButtonRight)
+
+    when rightMouse $ liftIO $ do 
+        Vector2 mouseDX mouseDY <- getMouseDelta
+        modifyIORef xOff (+mouseDX)
+        modifyIORef yOff (+mouseDY)
+
 updateEntities :: App ()
 updateEntities = do 
     lift $ cmapM_ $ \(Position p1, Velocity v, Mass m1, EntityID entity1, _ :: Not Immovable) -> do 
@@ -242,11 +249,14 @@ renderEntities = do
 
     let cam = Vector2 camX camY
 
-    lift $ cmapM_ $ \(Position (Vector2 x y), Size size, Mass m, CircleColor color, Title title, Trail trail) -> liftIO $ do
+    -- Render Entity trails underneath everything else
+    lift $ cmapM_ $ \(CircleColor color, Trail trail) -> liftIO $ do 
+        renderTrail (map (|+| cam) trail) color
+
+    lift $ cmapM_ $ \(Position (Vector2 x y), Size size, Mass m, CircleColor color, Title title) -> liftIO $ do
         let x' = x + camX
             y' = y + camY
 
-        renderTrail (map (|+| cam) trail) color
         drawCircle (round x') (round y') size color
         drawText title (round x') (round $ y' - size - 15) 10 white
         drawText (show m) (round x') (round $ y' + size + 5) 10 white
