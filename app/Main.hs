@@ -15,7 +15,9 @@ import Apecs
 import Control.Monad.Reader
 
 import Data.Aeson
+import Data.Bool (bool)
 import Data.List (foldl', find)
+import Data.IORef
 
 import GHC.Generics (Generic)
 
@@ -94,9 +96,15 @@ data Simulation = Simulation { entities       :: [EntityData]
 
 instance FromJSON Simulation
 
-type App = ReaderT Simulation (SystemT World IO)
+data AppState = AppState { simul       :: Simulation 
+                         , xOffset     :: IORef Float
+                         , yOffset     :: IORef Float
+                         , offsetSpeed :: IORef Float
+                         }
 
-runApp :: App a -> World -> Simulation -> IO a
+type App = ReaderT AppState (SystemT World IO)
+
+runApp :: App a -> World -> AppState -> IO a
 runApp app world initial = runSystem (runReaderT app initial) world
 
 main :: IO ()
@@ -117,7 +125,9 @@ runSimulation sim = do
     setTargetFPS (framerate sim)
     runSystem (mapM_ spawnCircle (entities sim)) world -- spawn initial entities 
 
-    whileWindowOpen0 (runApp gameFrame world sim) 
+    s <- AppState sim <$> newIORef 0 <*> newIORef 0 <*> newIORef 3
+
+    whileWindowOpen0 (runApp gameFrame world s) 
     closeWindow win
 
 showError :: String -> IO ()
@@ -129,7 +139,35 @@ showError err = do
     closeWindow win
 
 gameFrame :: App ()
-gameFrame = updateEntities >> liftIO beginDrawing >> renderWorld >> liftIO endDrawing
+gameFrame = updateWorld >> liftIO beginDrawing >> renderWorld >> liftIO endDrawing
+
+updateWorld :: App () 
+updateWorld = updateCamera >> updateEntities
+
+updateCamera :: App () 
+updateCamera = do 
+    xOff <- asks xOffset
+    yOff <- asks yOffset
+    s    <- asks offsetSpeed
+
+    speed <- liftIO (readIORef s)
+
+    left  <- liftIO $ (||) <$> isKeyDown KeyA <*> isKeyDown KeyLeft
+    right <- liftIO $ (||) <$> isKeyDown KeyD <*> isKeyDown KeyRight 
+    up    <- liftIO $ (||) <$> isKeyDown KeyW <*> isKeyDown KeyUp 
+    down  <- liftIO $ (||) <$> isKeyDown KeyS <*> isKeyDown KeyDown
+
+    let dx = bool 0 1 right - bool 0 1 left
+        dy = bool 0 1 down  - bool 0 1 up
+
+    liftIO $ modifyIORef xOff (subtract (dx * speed))
+    liftIO $ modifyIORef yOff (subtract (dy * speed))
+
+    reset <- liftIO (isKeyPressed KeyR)
+
+    when reset $ liftIO $ do 
+        writeIORef xOff 0
+        writeIORef yOff 0
 
 updateEntities :: App ()
 updateEntities = do 
@@ -164,7 +202,7 @@ updateEntities = do
                 set entity1 (Velocity rot, Position (currentPos |+| rot))
 
     -- Update trails
-    maxLength <- asks maxTrailLength
+    maxLength <- asks (maxTrailLength . simul)
     lift $ cmap $ \(Position p, Trail trail, _ :: Not Immovable) -> Trail (p : take (maxLength - 1) trail)
 
 circleCollision :: (Vector2, Float) -> (Vector2, Float) -> Bool
@@ -172,8 +210,8 @@ circleCollision (p1, r1) (p2, r2) = vectorDistance p1 p2 < r1 + r2
 
 renderWorld :: App ()
 renderWorld = do 
-    width  <- asks windowWidth
-    height <- asks windowHeight
+    width  <- asks (windowWidth . simul)
+    height <- asks (windowHeight . simul)
 
     liftIO $ do 
         clearBackground black
@@ -188,11 +226,23 @@ renderWorld = do
     renderEntities
 
 renderEntities :: App ()
-renderEntities = lift $ cmapM_ $ \(Position (Vector2 x y), Size size, Mass m, CircleColor color, Title title, Trail trail) -> liftIO $ do
-    renderTrail trail color
-    drawCircle (round x) (round y) size color
-    drawText title (round x) (round $ y - size - 15) 10 white
-    drawText (show m) (round x) (round $ y + size + 5) 10 white
+renderEntities = do 
+    xOff <- asks xOffset
+    yOff <- asks yOffset
+
+    camX <- liftIO (readIORef xOff)
+    camY <- liftIO (readIORef yOff)
+
+    let cam = Vector2 camX camY
+
+    lift $ cmapM_ $ \(Position (Vector2 x y), Size size, Mass m, CircleColor color, Title title, Trail trail) -> liftIO $ do
+        let x' = x + camX
+            y' = y + camY
+
+        renderTrail (map (|+| cam) trail) color
+        drawCircle (round x') (round y') size color
+        drawText title (round x') (round $ y' - size - 15) 10 white
+        drawText (show m) (round x') (round $ y' + size + 5) 10 white
 
 renderTrail :: MonadIO m => [Vector2] -> Color -> m ()
 renderTrail (Vector2 x1 y1 : ts@(Vector2 x2 y2 : _)) color = do 
