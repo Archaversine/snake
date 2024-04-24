@@ -216,17 +216,18 @@ renderWorld = do
     camX <- asks xOffset >>= liftIO . readIORef
     camY <- asks yOffset >>= liftIO . readIORef
 
-    let gridX = round camX `mod` 10
-        gridY = round camY `mod` 10
+    let gridSize = 10 
+        gridX    = round camX `mod` gridSize
+        gridY    = round camY `mod` gridSize
 
     liftIO $ do 
         clearBackground black
 
         -- Draw grid
-        forM_ [gridX, gridX + 10 .. width] $ \x -> 
+        forM_ [gridX, gridX + gridSize .. width] $ \x -> 
             drawLine x 0 x height (Color 10 10 10 255)
 
-        forM_ [gridY, gridY + 10 .. height] $ \y -> 
+        forM_ [gridY, gridY + gridSize .. height] $ \y -> 
             drawLine 0 y width y (Color 10 10 10 255)
 
     renderEntities
