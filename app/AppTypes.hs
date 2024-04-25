@@ -20,6 +20,8 @@ import GHC.Generics (Generic)
 
 import Raylib.Types
 
+import System.Random
+
 newtype Position    = Position Vector2
 newtype Velocity    = Velocity Vector2
 newtype Size        = Size Float
@@ -89,6 +91,7 @@ data AppState = AppState { simul        :: Simulation
                          , paused       :: IORef Bool
                          , following    :: IORef (Maybe Entity)
                          , currentMusic :: IORef Music
+                         , starGen      :: StdGen -- Purposefully not an IORef to always generate the same stars
                          }
 
 type App = ReaderT AppState (SystemT World IO)

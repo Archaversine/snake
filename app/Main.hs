@@ -11,6 +11,7 @@ import Camera
 import Circles
 
 import Control.Monad.Reader
+import Control.Monad.State (State, state, evalState)
 
 import Data.Aeson
 import Data.Bool
@@ -70,12 +71,15 @@ runSimulation sim = do
     follow <- newIORef Nothing
     musRef <- newIORef music
 
+    gen    <- newStdGen
+
     let s = AppState { simul        = sim
                      , offsetSpeed  = 11
                      , camera       = cam
                      , paused       = pause
                      , following    = follow
                      , currentMusic = musRef
+                     , starGen      = gen
                      }
 
     whileWindowOpen0 (runApp gameFrame world s) 
@@ -120,6 +124,16 @@ renderWorld = do
     cam    <- asks camera    >>= liftIO . readIORef
     follow <- asks following >>= liftIO . readIORef
     pause  <- asks paused    >>= liftIO . readIORef
+
+    -- Render stars
+    gen    <- asks starGen
+
+    let starCount = 2000 
+        stars     = evalState (replicateM starCount (newStar width height)) gen
+        starColor = Color 150 150 150 255
+
+    forM_ stars $ \(pos, size) -> do 
+        liftIO $ drawCircleV pos size starColor
 
     let Vector2 camX camY = camera2D'target cam
 
@@ -179,3 +193,10 @@ renderWorld = do
                 drawText ("dx: " ++ show @Int (round dx)) 10 (height - 55) 20 c
                 drawText ("dy: " ++ show @Int (round dy)) 10 (height - 30) 20 c
 
+newStar :: Int -> Int -> State StdGen (Vector2, Float)
+newStar width height = do 
+    x    <- state $ randomR (0, fromIntegral width)
+    y    <- state $ randomR (0, fromIntegral height)
+    size <- state $ randomR (1, 2)
+
+    return (Vector2 x y, size)
