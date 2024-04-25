@@ -170,9 +170,12 @@ renderWorld = do
             Position (Vector2 x y)   <- lift (get e)
             Velocity (Vector2 dx dy) <- lift (get e)
 
-            let posText = "(x: " ++ show @Int (round x) ++ ", y: " ++ show @Int (round y) ++ ")"
-                velText = "(dx: " ++ show @Int (round dx) ++ ", dy: " ++ show @Int (round dy) ++ ")"
-                label = t ++ " - " ++ posText ++ " - " ++ velText
+            liftIO $ do 
+                drawText t 10 (height - 140) 20 c
 
-            liftIO $ drawText label 10 (height - 30) 20 c
+                drawText ("x: " ++ show @Int (round x)) 10 (height - 105) 20 c 
+                drawText ("y: " ++ show @Int (round y)) 10 (height - 80) 20 c
+    
+                drawText ("dx: " ++ show @Int (round dx)) 10 (height - 55) 20 c
+                drawText ("dy: " ++ show @Int (round dy)) 10 (height - 30) 20 c
 
