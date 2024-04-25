@@ -12,7 +12,7 @@ import Raylib.Types
 import Raylib.Util.Math
 
 updateCamera :: App () 
-updateCamera = updateKeyboardPan >> checkResetKey >> updateMousePan
+updateCamera = updateKeyboardPan >> checkResetKey >> updateMousePan >> updateZoom
 
 updateKeyboardPan :: App () 
 updateKeyboardPan = do 
@@ -24,11 +24,11 @@ updateKeyboardPan = do
     up    <- liftIO $ (||) <$> isKeyDown KeyW <*> isKeyDown KeyUp 
     down  <- liftIO $ (||) <$> isKeyDown KeyS <*> isKeyDown KeyDown
 
-    let dx = bool 0 1 right - bool 0 1 left
-        dy = bool 0 1 down  - bool 0 1 up
-        v  = Vector2 (dx * speed) (dy * speed)
+    let dx  = bool 0 1 right - bool 0 1 left
+        dy  = bool 0 1 down  - bool 0 1 up
+        vec = Vector2 (dx * speed) (dy * speed)
 
-    liftIO $ modifyIORef cam (\c -> c { camera2D'offset = camera2D'offset c |-| v })
+    moveCamera cam (vec |* negate 1)
     
 checkResetKey :: App () 
 checkResetKey = do 
@@ -36,7 +36,7 @@ checkResetKey = do
     reset <- liftIO (isKeyPressed KeyR)
 
     when reset $ liftIO $ do 
-        modifyIORef cam (\c -> c { camera2D'offset = Vector2 0 0 })
+        modifyIORef cam (\c -> c { camera2D'offset = Vector2 0 0, camera2D'target = Vector2 0 0, camera2D'zoom = 1 })
 
 updateMousePan :: App ()
 updateMousePan = do 
@@ -45,4 +45,36 @@ updateMousePan = do
 
     when rightMouse $ liftIO $ do 
         mouseV <- getMouseDelta
-        modifyIORef cam (\c -> c { camera2D'offset = camera2D'offset c |+| mouseV })
+        moveCamera cam mouseV
+
+updateZoom :: App () 
+updateZoom = do 
+    cam    <- asks camera
+    wheel  <- liftIO getMouseWheelMove
+
+    let zoomIncrement = 0.125
+        zoom          = wheel * zoomIncrement
+
+    when (wheel /= 0) $ liftIO $ do
+        camObj         <- readIORef cam
+        mouseScreenPos <- getMousePosition
+        mouseWorldPos  <- getScreenToWorld2D mouseScreenPos camObj
+
+        modifyIORef cam (\c -> c { camera2D'offset = mouseScreenPos
+                                 , camera2D'target = mouseWorldPos
+                                 , camera2D'zoom   = camera2D'zoom c + zoom
+                                 })
+
+        constrainZoom cam zoomIncrement
+
+moveCamera :: MonadIO m => IORef Camera2D -> Vector2 -> m ()
+moveCamera camRef vel = liftIO $ do 
+    cam <- readIORef camRef
+    let v = vel |* (-1 / camera2D'zoom cam)
+    writeIORef camRef (cam { camera2D'target = camera2D'target cam |+| v })
+
+constrainZoom :: MonadIO m => IORef Camera2D -> Float -> m ()
+constrainZoom camRef minZoom = liftIO $ do 
+    cam <- readIORef camRef 
+    let zoom = max minZoom (camera2D'zoom cam) 
+    writeIORef camRef (cam { camera2D'zoom = zoom })

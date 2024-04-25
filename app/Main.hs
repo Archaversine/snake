@@ -47,7 +47,7 @@ runSimulation sim = do
     cam <- newIORef (Camera2D (Vector2 0 0) (Vector2 0 0) 0 1)
 
     let s = AppState { simul       = sim
-                     , offsetSpeed = 10
+                     , offsetSpeed = 11
                      , camera      = cam
                      }
 
@@ -74,22 +74,22 @@ renderWorld = do
     height <- asks (windowHeight . simul)
     cam    <- asks camera >>= liftIO . readIORef
 
-    let Vector2 camX camY = camera2D'offset cam
+    let Vector2 camX camY = camera2D'target cam
 
-    let gridSize  = 10 
+    let gridSize  = 50 * camera2D'zoom cam
         gridColor = Color 20 20 20 255
-        gridX     = round camX `mod` gridSize
-        gridY     = round camY `mod` gridSize
+        gridX     = fromIntegral @Int $ round (-camX) `mod` round gridSize
+        gridY     = fromIntegral @Int $ round (-camY) `mod` round gridSize
 
     liftIO $ do 
         clearBackground black
 
         -- Draw grid
-        forM_ [gridX, gridX + gridSize .. width] $ \x -> 
-            drawLine x 0 x height gridColor
+        forM_ [gridX, gridX + gridSize .. fromIntegral width] $ \x -> 
+            drawLine (round x) 0 (round x) height gridColor
 
-        forM_ [gridY, gridY + gridSize .. height] $ \y -> 
-            drawLine 0 y width y gridColor
+        forM_ [gridY, gridY + gridSize .. fromIntegral height] $ \y -> 
+            drawLine 0 (round y) width (round y) gridColor
 
     liftIO (beginMode2D cam)
     renderCircles
