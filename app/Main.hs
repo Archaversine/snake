@@ -73,6 +73,7 @@ renderWorld :: App ()
 renderWorld = do 
     width  <- asks (windowWidth . simul)
     height <- asks (windowHeight . simul)
+    title  <- asks (windowTitle . simul)
     cam    <- asks camera >>= liftIO . readIORef
 
     let Vector2 camX camY = camera2D'target cam
@@ -94,6 +95,7 @@ renderWorld = do
 
     liftIO (beginMode2D cam)
     renderCircles
+    liftIO $ drawText title 10 10 20 white
     liftIO endMode2D
 
 
