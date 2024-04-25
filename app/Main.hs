@@ -13,6 +13,7 @@ import Circles
 import Control.Monad.Reader
 
 import Data.Aeson
+import Data.Bool
 import Data.IORef
 
 import Raylib.Core
@@ -87,10 +88,13 @@ updatePause = do
 
 renderWorld :: App ()
 renderWorld = do 
-    width  <- asks (windowWidth . simul)
+    width  <- asks (windowWidth  . simul)
     height <- asks (windowHeight . simul)
-    title  <- asks (windowTitle . simul)
-    cam    <- asks camera >>= liftIO . readIORef
+    title  <- asks (windowTitle  . simul)
+
+    cam    <- asks camera    >>= liftIO . readIORef
+    follow <- asks following >>= liftIO . readIORef
+    pause  <- asks paused    >>= liftIO . readIORef
 
     let Vector2 camX camY = camera2D'target cam
 
@@ -112,6 +116,22 @@ renderWorld = do
     liftIO (beginMode2D cam)
     renderCircles
     liftIO endMode2D
-    liftIO $ drawText title 10 10 20 white
 
+    -- Render simulation title
+    liftIO $ drawText (title ++ bool "" " - Paused" pause) 10 10 20 white
+
+    -- Render entity name currently following
+    case follow of 
+        Nothing -> pure ()
+        Just e  -> do 
+            Title t                  <- lift (get e)
+            CircleColor c            <- lift (get e)
+            Position (Vector2 x y)   <- lift (get e)
+            Velocity (Vector2 dx dy) <- lift (get e)
+
+            let posText = "(x: " ++ show @Int (round x) ++ ", y: " ++ show @Int (round y) ++ ")"
+                velText = "(dx: " ++ show @Int (round dx) ++ ", dy: " ++ show @Int (round dy) ++ ")"
+                label = t ++ " - " ++ posText ++ " - " ++ velText
+
+            liftIO $ drawText label 10 (height - 30) 20 c
 
