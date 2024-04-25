@@ -105,6 +105,17 @@ updateWorld = do
     updatePause
     pause <- asks paused >>= liftIO . readIORef
 
+    -- Update framerate
+    unless pause $ do 
+        plusPressed  <- bool 0 1    <$> liftIO (isKeyDown KeyEqual)
+        minusPressed <- bool 0 (-1) <$> liftIO (isKeyDown KeyMinus)
+
+        let dframe = plusPressed + minusPressed
+
+        when (dframe /= 0) $ do
+            fps <- liftIO getFPS
+            liftIO $ setTargetFPS (fps + dframe)
+
     updateCamera
     unless pause updateCircles
 
@@ -164,16 +175,20 @@ renderWorld = do
     let keybindColor = Color 150 150 150 255
 
     -- Render keybindings
-    if mouseX < 100 && mouseY < 50 + 4 * 30 then liftIO $ do 
+    if mouseX < 100 && mouseY < 50 + 6 * 30 then liftIO $ do 
         drawText "R    - Reset Camera Position"   10 (50 + 0 * 30) 20 keybindColor
         drawText "Spc - Pause Simulation"         10 (50 + 1 * 30) 20 keybindColor
         drawText "Tab - Follow Body"              10 (50 + 2 * 30) 20 keybindColor
         drawText "Esc - Exit Simulation"          10 (50 + 3 * 30) 20 keybindColor
+        drawText "=    - Increase FPS"            10 (50 + 4 * 30) 20 keybindColor
+        drawText "-    - Decrease FPS"            10 (50 + 5 * 30) 20 keybindColor
     else liftIO $ do 
         drawText "R"   10 (50 + 0 * 30) 20 keybindColor
         drawText "Spc" 10 (50 + 1 * 30) 20 keybindColor
         drawText "Tab" 10 (50 + 2 * 30) 20 keybindColor
         drawText "Esc" 10 (50 + 3 * 30) 20 keybindColor
+        drawText "="   10 (50 + 4 * 30) 20 keybindColor
+        drawText "-"   10 (50 + 5 * 30) 20 keybindColor
 
     -- Render entity name currently following
     case follow of 
