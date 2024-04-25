@@ -109,7 +109,7 @@ renderWorld = do
 
     liftIO (beginMode2D cam)
     renderCircles
-    liftIO $ drawText title 10 10 20 white
     liftIO endMode2D
+    liftIO $ drawText title 10 10 20 white
 
 
