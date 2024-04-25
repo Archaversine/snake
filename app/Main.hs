@@ -45,13 +45,15 @@ runSimulation sim = do
     setTargetFPS (framerate sim)
     runSystem (mapM_ spawnCircle (entities sim)) world -- spawn initial entities 
 
-    cam   <- newIORef (Camera2D (Vector2 0 0) (Vector2 0 0) 0 1)
-    pause <- newIORef False
+    cam    <- newIORef (Camera2D (Vector2 0 0) (Vector2 0 0) 0 1)
+    pause  <- newIORef False
+    follow <- newIORef Nothing
 
     let s = AppState { simul       = sim
                      , offsetSpeed = 11
                      , camera      = cam
                      , paused      = pause
+                     , following   = follow
                      }
 
     whileWindowOpen0 (runApp gameFrame world s) 

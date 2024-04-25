@@ -87,6 +87,7 @@ data AppState = AppState { simul       :: Simulation
                          , offsetSpeed :: Float
                          , camera      :: IORef Camera2D
                          , paused      :: IORef Bool
+                         , following   :: IORef (Maybe Entity)
                          }
 
 type App = ReaderT AppState (SystemT World IO)
