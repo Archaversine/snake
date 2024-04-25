@@ -45,11 +45,13 @@ runSimulation sim = do
     setTargetFPS (framerate sim)
     runSystem (mapM_ spawnCircle (entities sim)) world -- spawn initial entities 
 
-    cam <- newIORef (Camera2D (Vector2 0 0) (Vector2 0 0) 0 1)
+    cam   <- newIORef (Camera2D (Vector2 0 0) (Vector2 0 0) 0 1)
+    pause <- newIORef False
 
     let s = AppState { simul       = sim
                      , offsetSpeed = 11
                      , camera      = cam
+                     , paused      = pause
                      }
 
     whileWindowOpen0 (runApp gameFrame world s) 
@@ -67,7 +69,19 @@ gameFrame :: App ()
 gameFrame = updateWorld >> liftIO beginDrawing >> renderWorld >> liftIO endDrawing
 
 updateWorld :: App () 
-updateWorld = updateCamera >> updateCircles
+updateWorld = do 
+    updatePause
+    pause <- asks paused >>= liftIO . readIORef
+
+    updateCamera
+    unless pause updateCircles
+
+updatePause :: App () 
+updatePause = do 
+    pause <- asks paused
+    liftIO (isKeyPressed KeySpace) >>= \case 
+        False -> pure () 
+        True  -> liftIO (modifyIORef pause not)
 
 renderWorld :: App ()
 renderWorld = do 
