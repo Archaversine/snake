@@ -26,8 +26,9 @@ updateCamera = updateKeyboardPan
 
 updateKeyboardPan :: App () 
 updateKeyboardPan = do 
-    cam   <- asks camera
-    speed <- asks offsetSpeed
+    cam    <- asks camera
+    speed  <- asks offsetSpeed
+    follow <- asks following
 
     left  <- liftIO $ (||) <$> isKeyDown KeyA <*> isKeyDown KeyLeft
     right <- liftIO $ (||) <$> isKeyDown KeyD <*> isKeyDown KeyRight 
@@ -38,7 +39,9 @@ updateKeyboardPan = do
         dy  = bool 0 1 down  - bool 0 1 up
         vec = Vector2 (dx * speed) (dy * speed)
 
-    moveCamera cam (vec |* negate 1)
+    when (vec /= Vector2 0 0) $ do 
+        moveCamera cam (vec |* negate 1)
+        liftIO $ writeIORef follow Nothing
     
 checkResetKey :: App () 
 checkResetKey = do 
@@ -54,10 +57,12 @@ updateMousePan :: App ()
 updateMousePan = do 
     cam        <- asks camera
     rightMouse <- liftIO (isMouseButtonDown MouseButtonRight)
+    follow     <- asks following
 
     when rightMouse $ liftIO $ do 
         mouseV <- getMouseDelta
         moveCamera cam mouseV
+        writeIORef follow Nothing
 
 updateZoom :: App () 
 updateZoom = do 
