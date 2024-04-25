@@ -99,6 +99,7 @@ updateZoom = do
 updateFollowTabKey :: App () 
 updateFollowTabKey = do 
     tab       <- liftIO (isKeyPressed KeyTab)
+    cam       <- asks camera
     followRef <- asks following
     follow    <- liftIO (readIORef followRef)
     counter   <- getSum . getCounter <$> lift (get global)
@@ -113,22 +114,20 @@ updateFollow :: App ()
 updateFollow = do 
     updateFollowTabKey
 
+    cam    <- asks camera
     width  <- asks (windowWidth . simul)
     height <- asks (windowHeight . simul)
 
-    let offset = Vector2 (fromIntegral width / 2) (fromIntegral height / 2)
+    camObj      <- liftIO (readIORef cam)
+
+    let screenOffset = Vector2 (fromIntegral width / 2) (fromIntegral height / 2) 
+        worldOffset = screenOffset |/ camera2D'zoom camObj
 
     (asks following >>= liftIO . readIORef) >>= \case 
         Nothing -> pure ()
         Just e  -> do 
             Position pos <- lift (get e)
-            cam          <- asks camera
-
-            zoom <- liftIO $ camera2D'zoom <$> readIORef cam
-
-            liftIO $ modifyIORef cam $ \c -> c { camera2D'target = pos |-| offset |/ zoom
-                                               --, camera2D'offset = worldPos
-                                               }
+            liftIO $ modifyIORef cam $ \c -> c { camera2D'target = pos |-| worldOffset, camera2D'offset = Vector2 0 0 }
 
 moveCamera :: MonadIO m => IORef Camera2D -> Vector2 -> m ()
 moveCamera camRef vel = liftIO $ do 
