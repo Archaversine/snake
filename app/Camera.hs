@@ -66,25 +66,35 @@ updateMousePan = do
 
 updateZoom :: App () 
 updateZoom = do 
-    cam    <- asks camera
-    wheel  <- liftIO getMouseWheelMove
-    follow <- asks following
+    cam       <- asks camera
+    wheel     <- liftIO getMouseWheelMove
+    followRef <- asks following
+
+    follow <- liftIO (readIORef followRef)
 
     let zoomIncrement = 0.125
         zoom          = wheel * zoomIncrement
 
-    when (wheel /= 0) $ liftIO $ do
-        camObj         <- readIORef cam
-        mouseScreenPos <- getMousePosition
-        mouseWorldPos  <- getScreenToWorld2D mouseScreenPos camObj
+    when (wheel /= 0) $ do
+        camObj         <- liftIO (readIORef cam)
 
-        modifyIORef cam (\c -> c { camera2D'offset = mouseScreenPos
-                                 , camera2D'target = mouseWorldPos
-                                 , camera2D'zoom   = camera2D'zoom c + zoom
-                                 })
+        case follow of 
+            Nothing -> do 
+                mouseScreenPos <- liftIO getMousePosition
+                mouseWorldPos  <- liftIO $ getScreenToWorld2D mouseScreenPos camObj
+
+                liftIO $ modifyIORef cam (\c -> c { camera2D'offset = mouseScreenPos
+                                                  , camera2D'target = mouseWorldPos
+                                                  , camera2D'zoom   = camera2D'zoom c + zoom
+                                                  })
+            Just e -> do 
+                Position worldPos <- lift (get e)
+                liftIO $ modifyIORef cam (\c -> c { camera2D'offset = Vector2 0 0
+                                                  , camera2D'target = worldPos
+                                                  , camera2D'zoom   = camera2D'zoom c + zoom
+                                                  })
 
         constrainZoom cam zoomIncrement
-        writeIORef follow Nothing -- Reset follow if zoom in or out
 
 updateFollowTabKey :: App () 
 updateFollowTabKey = do 
@@ -114,9 +124,10 @@ updateFollow = do
             Position pos <- lift (get e)
             cam          <- asks camera
 
-            liftIO $ modifyIORef cam $ \c -> c { camera2D'target = pos |-| offset 
-                                               , camera2D'offset = Vector2 0 0
-                                               , camera2D'zoom = 1 
+            zoom <- liftIO $ camera2D'zoom <$> readIORef cam
+
+            liftIO $ modifyIORef cam $ \c -> c { camera2D'target = pos |-| offset |/ zoom
+                                               --, camera2D'offset = worldPos
                                                }
 
 moveCamera :: MonadIO m => IORef Camera2D -> Vector2 -> m ()
