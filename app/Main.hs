@@ -15,8 +15,10 @@ import Control.Monad.Reader
 import Data.Aeson
 import Data.Bool
 import Data.IORef
+import Data.List
 
 import Raylib.Core
+import Raylib.Core.Audio
 import Raylib.Core.Shapes
 import Raylib.Core.Text
 
@@ -25,6 +27,8 @@ import Raylib.Util.Colors
 
 import Raylib.Types
 
+import System.Random
+import System.Directory
 import System.Environment
 
 main :: IO ()
@@ -34,27 +38,44 @@ main = do
         Left  err -> showError err
         Right sim -> runSimulation sim
 
+-- load random music file
+getMusicFile :: IO FilePath
+getMusicFile = do
+    files <- listDirectory "music"
+    let musicFiles = filter (isSuffixOf ".mp3") files
+    randomIndex <- randomRIO (0, length musicFiles - 1)
+    pure $ "music/" ++ musicFiles !! randomIndex
+
 runSimulation :: Simulation -> IO ()
 runSimulation sim = do 
     let width  = windowWidth sim 
         height = windowHeight sim
+
+    initAudioDevice
 
     win   <- initWindow width height (windowTitle sim)
     world <- initWorld
 
     setConfigFlags [Msaa4xHint]
     setTargetFPS (framerate sim)
+
+    musicFile  <- getMusicFile 
+    music <- loadMusicStream musicFile win
+    playMusicStream music
+
     runSystem (mapM_ spawnCircle (entities sim)) world -- spawn initial entities 
 
     cam    <- newIORef (Camera2D (Vector2 0 0) (Vector2 0 0) 0 1)
     pause  <- newIORef False
     follow <- newIORef Nothing
+    musRef <- newIORef music
 
-    let s = AppState { simul       = sim
-                     , offsetSpeed = 11
-                     , camera      = cam
-                     , paused      = pause
-                     , following   = follow
+    let s = AppState { simul        = sim
+                     , offsetSpeed  = 11
+                     , camera       = cam
+                     , paused       = pause
+                     , following    = follow
+                     , currentMusic = musRef
                      }
 
     whileWindowOpen0 (runApp gameFrame world s) 
@@ -73,6 +94,10 @@ gameFrame = updateWorld >> liftIO beginDrawing >> renderWorld >> liftIO endDrawi
 
 updateWorld :: App () 
 updateWorld = do 
+    -- Update music
+    music <- asks currentMusic >>= liftIO . readIORef
+    liftIO $ updateMusicStream music
+
     updatePause
     pause <- asks paused >>= liftIO . readIORef
 

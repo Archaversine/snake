@@ -83,11 +83,12 @@ data Simulation = Simulation { entities       :: [EntityData]
 
 instance FromJSON Simulation
 
-data AppState = AppState { simul       :: Simulation 
-                         , offsetSpeed :: Float
-                         , camera      :: IORef Camera2D
-                         , paused      :: IORef Bool
-                         , following   :: IORef (Maybe Entity)
+data AppState = AppState { simul        :: Simulation 
+                         , offsetSpeed  :: Float
+                         , camera       :: IORef Camera2D
+                         , paused       :: IORef Bool
+                         , following    :: IORef (Maybe Entity)
+                         , currentMusic :: IORef Music
                          }
 
 type App = ReaderT AppState (SystemT World IO)
