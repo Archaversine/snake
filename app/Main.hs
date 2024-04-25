@@ -145,6 +145,22 @@ renderWorld = do
     -- Render simulation title
     liftIO $ drawText (title ++ bool "" " - Paused" pause) 10 10 20 white
 
+    Vector2 mouseX mouseY <- liftIO getMousePosition
+
+    let keybindColor = Color 150 150 150 255
+
+    -- Render keybindings
+    if mouseX < 100 && mouseY < 50 + 4 * 30 then liftIO $ do 
+        drawText "R    - Reset Camera Position"   10 (50 + 0 * 30) 20 keybindColor
+        drawText "Spc - Pause Simulation"         10 (50 + 1 * 30) 20 keybindColor
+        drawText "Tab - Follow Body"              10 (50 + 2 * 30) 20 keybindColor
+        drawText "Esc - Exit Simulation"          10 (50 + 3 * 30) 20 keybindColor
+    else liftIO $ do 
+        drawText "R"   10 (50 + 0 * 30) 20 keybindColor
+        drawText "Spc" 10 (50 + 1 * 30) 20 keybindColor
+        drawText "Tab" 10 (50 + 2 * 30) 20 keybindColor
+        drawText "Esc" 10 (50 + 3 * 30) 20 keybindColor
+
     -- Render entity name currently following
     case follow of 
         Nothing -> pure ()
