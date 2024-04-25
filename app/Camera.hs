@@ -99,7 +99,6 @@ updateZoom = do
 updateFollowTabKey :: App () 
 updateFollowTabKey = do 
     tab       <- liftIO (isKeyPressed KeyTab)
-    cam       <- asks camera
     followRef <- asks following
     follow    <- liftIO (readIORef followRef)
     counter   <- getSum . getCounter <$> lift (get global)
