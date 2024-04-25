@@ -41,6 +41,7 @@ runSimulation sim = do
     win   <- initWindow width height (windowTitle sim)
     world <- initWorld
 
+    setConfigFlags [Msaa4xHint]
     setTargetFPS (framerate sim)
     runSystem (mapM_ spawnCircle (entities sim)) world -- spawn initial entities 
 
