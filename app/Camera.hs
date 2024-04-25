@@ -12,7 +12,10 @@ import Raylib.Types
 import Raylib.Util.Math
 
 updateCamera :: App () 
-updateCamera = updateKeyboardPan >> checkResetKey >> updateMousePan >> updateZoom
+updateCamera = updateKeyboardPan 
+            >> checkResetKey 
+            >> updateMousePan 
+            >> updateZoom 
 
 updateKeyboardPan :: App () 
 updateKeyboardPan = do 
